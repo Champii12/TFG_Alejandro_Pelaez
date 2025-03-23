@@ -64,7 +64,6 @@ fun InicioScreen(
             fontWeight = FontWeight.Bold,
             color = LightRed,
             modifier = Modifier.padding(8.dp))
-
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {navigateToSignUp()},
             modifier = Modifier

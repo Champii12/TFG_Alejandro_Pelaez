@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "742667814277",
+    "project_id": "goalfit-3458d",
+    "storage_bucket": "goalfit-3458d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742667814277:android:b1d5a2dda8cc3cd9b830ec",
+        "android_client_info": {
+          "package_name": "com.example.goalfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGhgJGzg_TdZgiRuow_7AsuMor6JoQapo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

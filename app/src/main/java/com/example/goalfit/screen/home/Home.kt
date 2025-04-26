@@ -30,7 +30,7 @@ fun Home(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Hola, $usuarioNombre!",
+                        text = "Binevenido de nuevo!",
                         style = MaterialTheme.typography.titleLarge
                     )
                 },

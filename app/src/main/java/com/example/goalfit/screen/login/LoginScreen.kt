@@ -2,6 +2,7 @@ package com.example.goalfit.screen.login
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,7 +48,11 @@ import com.example.goalfit.ui.theme.unselectedColor
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun LoginScreen(auth: FirebaseAuth, navigateToHome: () -> Unit) {
+fun LoginScreen(
+    auth: FirebaseAuth,
+    navigateToHome: () -> Unit,
+    navigateBack: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     Column (modifier = Modifier
@@ -57,16 +62,15 @@ fun LoginScreen(auth: FirebaseAuth, navigateToHome: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Row (
-
-        ){
-
-            Icon(painter = painterResource(
-                id = R.drawable.ic_back_24),
+        Row {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_back_24),
                 contentDescription = "Back",
                 tint = White,
                 modifier = Modifier
-                    .padding(vertical = 16.dp).size(24.dp)
+                    .padding(vertical = 16.dp)
+                    .size(24.dp)
+                    .clickable { navigateBack() }   // <-- al hacer click, vuelve atrás
             )
             Spacer(modifier = Modifier.weight(1f))
         }

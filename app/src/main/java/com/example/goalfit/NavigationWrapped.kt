@@ -35,18 +35,18 @@ fun NavigationWrapped(
             )
         }
         composable("login") {
-            LoginScreen(auth) {
-                navHostController.navigate("home") {
-                    popUpTo("login") { inclusive = true }
-                }
-            }
+            LoginScreen(
+                auth = auth,
+                navigateToHome = { navHostController.navigate("home") },
+                navigateBack = { navHostController.popBackStack() } // ← vuelve al anterior
+            )
         }
         composable("signup") {
-            SignUpScreen(auth) {
-                navHostController.navigate("peticiondatos") {
-                    popUpTo("signup") { inclusive = true }
-                }
-            }
+            SignUpScreen(
+                auth = auth,
+                onSignUpSuccess = { navHostController.navigate("peticiondatos") },
+                navigateBack = { navHostController.popBackStack() } // ← vuelve al anterior
+            )
         }
         composable("peticiondatos") {
             PeticionDatos(

@@ -19,7 +19,8 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun SignUpScreen(
     auth: FirebaseAuth,
-    onSignUpSuccess: () -> Unit        // ← aquí añadimos el callback
+    onSignUpSuccess: () -> Unit,
+    navigateBack: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

@@ -1,0 +1,347 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "424129fcac94edc46b92821c2cd5c49a",
+    "entities": [
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`usuarioID` TEXT NOT NULL, `nombre` TEXT NOT NULL, `edad` INTEGER NOT NULL, `peso` REAL NOT NULL, `altura` REAL NOT NULL, `nivelExperiencia` TEXT NOT NULL, `objetivo` TEXT NOT NULL, PRIMARY KEY(`usuarioID`))",
+        "fields": [
+          {
+            "fieldPath": "usuarioID",
+            "columnName": "usuarioID",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "edad",
+            "columnName": "edad",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peso",
+            "columnName": "peso",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "altura",
+            "columnName": "altura",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nivelExperiencia",
+            "columnName": "nivelExperiencia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "objetivo",
+            "columnName": "objetivo",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "usuarioID"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ejercicios",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idEjercicio` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `categoria` TEXT, `descripcion` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "idEjercicio",
+            "columnName": "idEjercicio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoria",
+            "columnName": "categoria",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idEjercicio"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "rutinas",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idRutina` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioID` TEXT NOT NULL, `nombreRutina` TEXT NOT NULL, `fechaCreacion` TEXT NOT NULL, FOREIGN KEY(`usuarioID`) REFERENCES `users`(`usuarioID`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "idRutina",
+            "columnName": "idRutina",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioID",
+            "columnName": "usuarioID",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreRutina",
+            "columnName": "nombreRutina",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaCreacion",
+            "columnName": "fechaCreacion",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idRutina"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_rutinas_usuarioID",
+            "unique": false,
+            "columnNames": [
+              "usuarioID"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rutinas_usuarioID` ON `${TABLE_NAME}` (`usuarioID`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuarioID"
+            ],
+            "referencedColumns": [
+              "usuarioID"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "rutinas_ejercicios",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idRutina` INTEGER NOT NULL, `idEjercicio` INTEGER NOT NULL, `series` INTEGER NOT NULL, `repeticiones` INTEGER NOT NULL, `duracion` REAL, PRIMARY KEY(`idRutina`, `idEjercicio`), FOREIGN KEY(`idRutina`) REFERENCES `rutinas`(`idRutina`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idEjercicio`) REFERENCES `ejercicios`(`idEjercicio`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "idRutina",
+            "columnName": "idRutina",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idEjercicio",
+            "columnName": "idEjercicio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "series",
+            "columnName": "series",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repeticiones",
+            "columnName": "repeticiones",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duracion",
+            "columnName": "duracion",
+            "affinity": "REAL",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idRutina",
+            "idEjercicio"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_rutinas_ejercicios_idRutina",
+            "unique": false,
+            "columnNames": [
+              "idRutina"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rutinas_ejercicios_idRutina` ON `${TABLE_NAME}` (`idRutina`)"
+          },
+          {
+            "name": "index_rutinas_ejercicios_idEjercicio",
+            "unique": false,
+            "columnNames": [
+              "idEjercicio"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rutinas_ejercicios_idEjercicio` ON `${TABLE_NAME}` (`idEjercicio`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rutinas",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "idRutina"
+            ],
+            "referencedColumns": [
+              "idRutina"
+            ]
+          },
+          {
+            "table": "ejercicios",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "idEjercicio"
+            ],
+            "referencedColumns": [
+              "idEjercicio"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "progreso",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idProgreso` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usuarioID` TEXT NOT NULL, `idRutina` INTEGER NOT NULL, `fecha` TEXT NOT NULL, `duracionTotal` REAL NOT NULL, `ejerciciosCompletados` TEXT NOT NULL, FOREIGN KEY(`usuarioID`) REFERENCES `users`(`usuarioID`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idRutina`) REFERENCES `rutinas`(`idRutina`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "idProgreso",
+            "columnName": "idProgreso",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usuarioID",
+            "columnName": "usuarioID",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idRutina",
+            "columnName": "idRutina",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duracionTotal",
+            "columnName": "duracionTotal",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ejerciciosCompletados",
+            "columnName": "ejerciciosCompletados",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "idProgreso"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_progreso_usuarioID",
+            "unique": false,
+            "columnNames": [
+              "usuarioID"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_progreso_usuarioID` ON `${TABLE_NAME}` (`usuarioID`)"
+          },
+          {
+            "name": "index_progreso_idRutina",
+            "unique": false,
+            "columnNames": [
+              "idRutina"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_progreso_idRutina` ON `${TABLE_NAME}` (`idRutina`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "usuarioID"
+            ],
+            "referencedColumns": [
+              "usuarioID"
+            ]
+          },
+          {
+            "table": "rutinas",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "idRutina"
+            ],
+            "referencedColumns": [
+              "idRutina"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '424129fcac94edc46b92821c2cd5c49a')"
+    ]
+  }
+}

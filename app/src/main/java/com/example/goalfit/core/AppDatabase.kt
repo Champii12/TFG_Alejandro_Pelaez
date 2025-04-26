@@ -14,10 +14,10 @@ import com.example.goalfit.core.data.Converters
         RutinaEjercicioEntity::class,
         ProgresoEntity::class
     ],
-    version = 2,                     // ¡sube la versión!
+    version = 2,
     exportSchema = false
 )
-@TypeConverters(Converters::class)  // registra tus converters aquí
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
@@ -35,7 +35,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "goalfit-db"
                 )
-                    // Si no quieres escribir migraciones, puedes descomentar:
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = inst

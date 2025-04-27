@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 /*
+esto es para que no se quede logueado al reiniciar la app
     override fun onStart() {
         super.onStart()
         val currentUser = auth.currentUser

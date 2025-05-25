@@ -1,11 +1,17 @@
-// SignUpScreen.kt
 package com.example.goalfit.screen.signup
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,35 +19,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.goalfit.R
-import com.example.goalfit.ui.theme.*
+import com.example.goalfit.screen.home.AppColors
+import com.example.goalfit.screen.home.ThemeManager
 import com.google.firebase.auth.FirebaseAuth
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
     auth: FirebaseAuth,
     onSignUpSuccess: () -> Unit,
     navigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    // Observar el estado del tema
+    val isDarkTheme = ThemeManager.isAppInDarkTheme()
+
+    // Forzar recomposición cuando cambia el tema
+    val themeState = ThemeManager.isDarkTheme.value
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFFF5722), // Naranja fuerte
-                        Color(0xFFFF7043), // Naranja medio
-                        Color(0xFFFFAB91)  // Naranja suave
-                    )
-                )
-            )
+            .background(AppColors.gradient())
     ) {
         Column(
             modifier = Modifier
@@ -49,37 +60,57 @@ fun SignUpScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Back button
+            // Barra superior con botón de retroceso y botón de tema
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
+                // Botón de retroceso
+                IconButton(
+                    onClick = { navigateBack() },
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color(0xFF1A1A1A))
-                        .clickable { navigateBack() },
-                    contentAlignment = Alignment.Center
+                        .semantics {
+                            contentDescription = "Volver atrás"
+                        }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_back_24),
-                        contentDescription = "Atrás",
-                        tint = White,
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                // App logo or name could go here
-                Spacer(modifier = Modifier.size(40.dp))
+                // Botón para alternar entre modo claro y oscuro
+                IconButton(
+                    onClick = { ThemeManager.toggleTheme() },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF1A1A1A))
+                        .semantics {
+                            contentDescription = if (isDarkTheme) "Cambiar a modo claro" else "Cambiar a modo oscuro"
+                        }
+                ) {
+                    Icon(
+                        imageVector = if (isDarkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(60.dp))
 
-            // Title
+            // Título y subtítulo
             Text(
                 "Crear cuenta",
-                color = White,
+                color = AppColors.iconTint(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp,
                 modifier = Modifier.align(Alignment.Start)
@@ -87,17 +118,17 @@ fun SignUpScreen(
 
             Text(
                 "Regístrate para comenzar",
-                color = selectedColor,
+                color = AppColors.iconTint().copy(alpha = 0.8f),
                 fontSize = 16.sp,
                 modifier = Modifier
                     .align(Alignment.Start)
                     .padding(bottom = 40.dp)
             )
 
-            // Email field
+            // Campo de correo electrónico
             Text(
                 "Correo electrónico",
-                color = White,
+                color = AppColors.iconTint(),
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
                 modifier = Modifier
@@ -112,69 +143,96 @@ fun SignUpScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp)),
                 colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = unselectedColor,
-                    focusedContainerColor = unselectedColor.copy(alpha = 0.7f),
-                    focusedIndicatorColor = selectedColor,
+                    unfocusedContainerColor = if (isDarkTheme) Color(0xFF333333) else Color(0x33000000),
+                    focusedContainerColor = if (isDarkTheme) Color(0xFF444444) else Color(0x55000000),
+                    focusedIndicatorColor = AppColors.accent(),
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = selectedColor,
-                    unfocusedTextColor = White,
-                    focusedTextColor = White
+                    cursorColor = AppColors.accent(),
+                    unfocusedTextColor = AppColors.iconTint(),
+                    focusedTextColor = AppColors.iconTint()
                 ),
-                placeholder = { Text("ejemplo@correo.com", color = Color(0xFFAAAAAA)) }
+                placeholder = {
+                    Text(
+                        "ejemplo@correo.com",
+                        color = AppColors.iconTint().copy(alpha = 0.6f)
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Password field
+
+            // Contraseña con toggle visibilidad
             Text(
                 "Contraseña",
-                color = White,
+                color = AppColors.iconTint(),
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
                 modifier = Modifier
                     .align(Alignment.Start)
                     .padding(bottom = 8.dp, start = 4.dp)
             )
-
             TextField(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp)),
+                visualTransformation = if (passwordVisible) VisualTransformation.None
+                else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector =
+                                if (passwordVisible) Icons.Default.VisibilityOff
+                                else Icons.Default.Visibility,
+                            contentDescription =
+                                if (passwordVisible) "Ocultar contraseña"
+                                else "Mostrar contraseña"
+                        )
+                    }
+                },
                 colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = unselectedColor,
-                    focusedContainerColor = unselectedColor.copy(alpha = 0.7f),
-                    focusedIndicatorColor = selectedColor,
+                    unfocusedContainerColor =
+                        if (isDarkTheme) Color(0xFF333333) else Color(0x33000000),
+                    focusedContainerColor =
+                        if (isDarkTheme) Color(0xFF444444) else Color(0x55000000),
+                    focusedIndicatorColor = AppColors.accent(),
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = selectedColor,
-                    unfocusedTextColor = White,
-                    focusedTextColor = White
+                    cursorColor = AppColors.accent(),
+                    unfocusedTextColor = AppColors.iconTint(),
+                    focusedTextColor = AppColors.iconTint()
                 ),
-                placeholder = { Text("Crea una contraseña segura", color = Color(0xFFAAAAAA)) }
+                placeholder = {
+                    Text("Crea una contraseña segura", color = AppColors.iconTint().copy(alpha = 0.6f))
+                }
             )
+
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Register button
+            // Botón de registro
             Button(
                 onClick = {
                     auth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Log.i("SignUp", "Registro exitoso")
-                                onSignUpSuccess()
-                            } else {
-                                Log.e("SignUp", "Error en el registro", task.exception)
-                            }
+                        .addOnSuccessListener {
+                            Log.i("SignUp", "Registro exitoso")
+                            onSignUpSuccess()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("SignUp", "Error en el registro", e)
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(56.dp)
+                    .semantics {
+                        contentDescription = "Botón para registrarse"
+                    },
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = selectedColor
+                    containerColor = Color(0xFF4CAF50)
                 )
             ) {
                 Text(
@@ -186,20 +244,24 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Login suggestion
+            // Enlace para iniciar sesión
             Row(
-                modifier = Modifier.padding(bottom = 24.dp),
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+                    .semantics {
+                        contentDescription = "Enlace para iniciar sesión si ya tienes cuenta"
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     "¿Ya tienes una cuenta? ",
-                    color = selectedColor,
+                    color = AppColors.iconTint().copy(alpha = 0.8f),
                     fontSize = 14.sp
                 )
                 Text(
                     "Iniciar sesión",
-                    color = selectedColor,
+                    color = AppColors.accent(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     modifier = Modifier.clickable { navigateBack() }

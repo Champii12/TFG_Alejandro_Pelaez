@@ -1,91 +1,47 @@
 package com.example.goalfit.screen.peticiondatos
 
-import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.goalfit.core.AppDatabase
 import com.example.goalfit.core.entity.UserEntity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-// --- DTO para Firestore (sin campo usuarioID) ---
-data class UsuarioFirestore(
-    val nombre: String,
-    val edad: Int,
-    val peso: Double,
-    val altura: Double,
-    val nivelExperiencia: String,
-    val objetivo: String
-)
-
-// --- Función para crear el usuario tanto en Firestore como en Room ---
-// Llama a onSuccess() una vez guardado en ambas bases
-fun crearUsuario(
-    dbFirestore: FirebaseFirestore,
-    usuarioFs: UsuarioFirestore,
-    localDb: AppDatabase,
-    onSuccess: () -> Unit
-) {
-    dbFirestore.collection("usuarios")
-        .add(usuarioFs)
-        .addOnSuccessListener { docRef ->
-            val newId = docRef.id
-            val localUser = UserEntity(
-                usuarioID        = newId,
-                nombre           = usuarioFs.nombre,
-                edad             = usuarioFs.edad,
-                peso             = usuarioFs.peso,
-                altura           = usuarioFs.altura,
-                nivelExperiencia = usuarioFs.nivelExperiencia,
-                objetivo         = usuarioFs.objetivo
-            )
-            CoroutineScope(Dispatchers.IO).launch {
-                localDb.userDao().insertarUsuario(localUser)
-                withContext (Dispatchers.Main){
-                    onSuccess()
-                }
-            }
-        }
-        .addOnFailureListener {
-            // manejar error si es necesario
-        }
-}
-
+// Reutilizable: selector desplegable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownSelector(
@@ -97,30 +53,26 @@ fun DropdownSelector(
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
+        onExpandedChange = { expanded = !expanded }
     ) {
         OutlinedTextField(
             value = selectedOption,
-            onValueChange = { /* no-op */ },
+            onValueChange = {},
             label = { Text(label, color = Color.White.copy(alpha = 0.8f)) },
             readOnly = true,
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded
-                )
-            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                cursorColor = Color.White,
+                containerColor = Color(0x33FFFFFF),
                 focusedBorderColor = Color.White,
                 unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                containerColor = Color(0x33FFFFFF)
-            )
+                cursorColor = Color.White
+            ),
+            textStyle = LocalTextStyle.current.copy(color = Color.White)
         )
-        DropdownMenu(
+        ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier
@@ -140,17 +92,16 @@ fun DropdownSelector(
     }
 }
 
-fun NumericKeyboardOptions() = KeyboardOptions(keyboardType = KeyboardType.Number)
 
-// --- Pantalla de petición de datos ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PeticionDatos(
     dbFirestore: FirebaseFirestore,
-    navController: NavHostController
+    onDataSaved: () -> Unit
 ) {
     val context = LocalContext.current
     val localDb = AppDatabase.getInstance(context)
+    val scope = rememberCoroutineScope()
 
     var nombre by remember { mutableStateOf("") }
     var edad by remember { mutableStateOf("") }
@@ -163,144 +114,140 @@ fun PeticionDatos(
     val objetivoOptions = listOf("Perder peso", "Ganancia muscular", "Mantener forma")
     var selectedObjetivo by remember { mutableStateOf(objetivoOptions[0]) }
 
+    var newImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            newImageUri = it
+        }
+    }
+
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFF5722), // Naranja fuerte
-                        Color(0xFFFF7043), // Naranja medio
-                        Color(0xFFFFAB91)  // Naranja suave
+                        Color(0xFFFF5722),
+                        Color(0xFFFF7043),
+                        Color(0xFFFFAB91)
                     )
                 )
             )
     ) {
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
+            Spacer(Modifier.height(24.dp))
             Text(
                 "Completa tu perfil",
-                color = Color.White,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
+                color = Color.White,
                 modifier = Modifier.align(Alignment.Start)
             )
+            Spacer(Modifier.height(16.dp))
 
-            Text(
-                "Necesitamos algunos datos para personalizar tu experiencia",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 16.sp,
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(bottom = 32.dp)
-            )
+            Box(
+                Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.3f))
+                    .clickable { launcher.launch(arrayOf("image/*")) },
+                contentAlignment = Alignment.Center
+            ) {
+                if (newImageUri != null) {
+                    AsyncImage(
+                        model = newImageUri,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+            }
+            TextButton(onClick = { launcher.launch(arrayOf("image/*")) }) {
+                Text("Elegir foto", color = Color.White)
+            }
+            Spacer(Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre", color = Color.White.copy(alpha = 0.8f)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    containerColor = Color(0x33FFFFFF)
+            @Composable
+            fun CampoTexto(
+                value: String,
+                onValueChange: (String) -> Unit,
+                label: String,
+                keyboard: KeyboardType = KeyboardType.Text
+            ) {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    label = { Text(label, color = Color.White.copy(alpha = 0.8f)) },
+                    textStyle = TextStyle(color = Color.White),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        containerColor = Color(0x33FFFFFF),
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
+                        cursorColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
                 )
-            )
+            }
 
-            OutlinedTextField(
-                value = edad,
-                onValueChange = { edad = it },
-                label = { Text("Edad", color = Color.White.copy(alpha = 0.8f)) },
-                keyboardOptions = NumericKeyboardOptions(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    containerColor = Color(0x33FFFFFF)
-                )
-            )
+            CampoTexto(nombre, { nombre = it }, "Nombre")
+            CampoTexto(edad, { edad = it }, "Edad", KeyboardType.Number)
+            CampoTexto(peso, { peso = it }, "Peso (kg)", KeyboardType.Number)
+            CampoTexto(altura, { altura = it }, "Altura (m)", KeyboardType.Number)
 
-            OutlinedTextField(
-                value = peso,
-                onValueChange = { peso = it },
-                label = { Text("Peso (kg)", color = Color.White.copy(alpha = 0.8f)) },
-                keyboardOptions = NumericKeyboardOptions(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    containerColor = Color(0x33FFFFFF)
-                )
-            )
+            Spacer(Modifier.height(8.dp))
+            DropdownSelector("Nivel de experiencia", experienciaOptions, selectedExperiencia) { selectedExperiencia = it }
+            Spacer(Modifier.height(8.dp))
+            DropdownSelector("Objetivo", objetivoOptions, selectedObjetivo) { selectedObjetivo = it }
 
-            OutlinedTextField(
-                value = altura,
-                onValueChange = { altura = it },
-                label = { Text("Altura (m)", color = Color.White.copy(alpha = 0.8f)) },
-                keyboardOptions = NumericKeyboardOptions(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    containerColor = Color(0x33FFFFFF)
-                )
-            )
-
-            DropdownSelector(
-                label = "Nivel de Experiencia",
-                options = experienciaOptions,
-                selectedOption = selectedExperiencia,
-                onOptionSelected = { selectedExperiencia = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            DropdownSelector(
-                label = "Objetivo",
-                options = objetivoOptions,
-                selectedOption = selectedObjetivo,
-                onOptionSelected = { selectedObjetivo = it }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
+            Spacer(Modifier.height(24.dp))
             Button(
                 onClick = {
-                    val usuarioFs = UsuarioFirestore(
-                        nombre           = nombre,
-                        edad             = edad.toIntOrNull()    ?: 0,
-                        peso             = peso.toDoubleOrNull() ?: 0.0,
-                        altura           = altura.toDoubleOrNull() ?: 0.0,
-                        nivelExperiencia = selectedExperiencia,
-                        objetivo         = selectedObjetivo
-                    )
-                    crearUsuario(
-                        dbFirestore = dbFirestore,
-                        usuarioFs   = usuarioFs,
-                        localDb     = localDb
-                    ) {
-                        navController.navigate("home") {
-                            popUpTo("peticiondatos") { inclusive = true }
+                    scope.launch {
+                        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+                            Log.e("PeticionDatos", "Usuario no autenticado")
+                            return@launch
                         }
+                        val localUser = UserEntity(
+                            usuarioID = uid,
+                            nombre = nombre,
+                            edad = edad.toIntOrNull() ?: 0,
+                            peso = peso.toDoubleOrNull() ?: 0.0,
+                            altura = altura.toDoubleOrNull() ?: 0.0,
+                            nivelExperiencia = selectedExperiencia,
+                            objetivo = selectedObjetivo,
+                            photoUrl = newImageUri?.toString()
+                        )
+                        withContext(Dispatchers.IO) {
+                            localDb.userDao().insertarUsuario(localUser)
+                        }
+                        dbFirestore.collection("usuarios")
+                            .document(uid)
+                            .set(localUser)
+                            .await()
+                        onDataSaved()
                     }
                 },
                 modifier = Modifier
@@ -308,17 +255,14 @@ fun PeticionDatos(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50) // Verde que combina bien con naranja
+                    containerColor = Color(0xFF4CAF50)
                 )
             ) {
-                Text(
-                    "Guardar perfil",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Guardar perfil", color = Color.White, textAlign = TextAlign.Center)
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
+
+private fun Int?.orZero() = this ?: 0
+private fun Double?.orZero() = this ?: 0.0

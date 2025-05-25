@@ -1,5 +1,8 @@
 package com.example.goalfit.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)
@@ -48,8 +51,22 @@ val DarkIndigo = Color(0xFF4b0082)
 val DarkLightBlue = Color(0xFFadd8e6)
 val DarkLightGreen = Color(0xFF90ee90)
 
-
-
-
 val selectedColor = Color(0xFF7c7c7c)
 val unselectedColor = Color(0xFF4a4a4a)
+
+object AppColors {
+    /* Gradiente principal reutilizando colores propios */
+    @Composable
+    fun gradient() = Brush.verticalGradient(
+        colors = listOf(Orange, LightOrange, LightRed)
+    )
+
+    /* Theme-aware backgrounds */
+    @Composable fun cardBg() = if (isSystemInDarkTheme()) Black else White
+    @Composable fun cardTransparent()= if (isSystemInDarkTheme()) Black.copy(alpha = .12f)
+    else White.copy(alpha = .15f)
+    @Composable fun accent() = Orange     // o LightOrange / lo que desees
+    @Composable fun textPrimary() = if (isSystemInDarkTheme()) White else Gray
+    @Composable fun textSecondary() = if (isSystemInDarkTheme()) LightGray else LightGray
+    @Composable fun iconTint() = if (isSystemInDarkTheme()) White else White
+}

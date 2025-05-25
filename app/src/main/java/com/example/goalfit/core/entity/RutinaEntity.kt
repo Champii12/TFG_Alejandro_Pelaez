@@ -1,10 +1,10 @@
 package com.example.goalfit.core.entity
 
 import androidx.room.*
-import androidx.room.ForeignKey
 import java.util.Date
 
-@Entity ( tableName = "rutinas",
+@Entity(
+    tableName = "rutinas",
     foreignKeys = [
         ForeignKey(
             entity = UserEntity::class,
@@ -13,12 +13,13 @@ import java.util.Date
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index ("usuarioID")]
+    indices = [Index("firestoreId", unique = true)]
 )
 data class RutinaEntity(
-    @PrimaryKey (autoGenerate = true)
-    val idRutina: Int  = 0,
+    @PrimaryKey(autoGenerate = true)
+    val idRutina: Int = 0,           // INT, no String
+    val firestoreId: String,         // para Firestore
     val usuarioID: String,
     val nombreRutina: String,
-    val fechaCreacion: Date,
+    val fechaCreacion: Date
 )

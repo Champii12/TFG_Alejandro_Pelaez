@@ -14,7 +14,7 @@ import com.example.goalfit.core.data.Converters
         RutinaEjercicioEntity::class,
         ProgresoEntity::class
     ],
-    version = 2,
+    version = 17,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

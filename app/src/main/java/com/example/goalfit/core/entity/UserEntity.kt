@@ -11,5 +11,6 @@ data class UserEntity(
     val peso: Double,
     val altura: Double,
     val nivelExperiencia: String,
-    val objetivo: String
+    val objetivo: String,
+    val photoUrl: String? = null
 )

@@ -60,6 +60,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(platform("com.google.firebase:firebase-bom:32.0.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     ksp("androidx.room:room-compiler:2.6.1")
 
@@ -73,6 +75,10 @@ dependencies {
 
     // For Google authentication (if used)
     implementation("com.google.android.gms:play-services-auth:20.5.0")
+
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("com.airbnb.android:lottie-compose:6.6.6")
 
     implementation("androidx.compose.foundation:foundation")
     implementation(libs.androidx.core.ktx)

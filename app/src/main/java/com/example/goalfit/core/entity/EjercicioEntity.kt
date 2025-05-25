@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class EjercicioEntity(
     @PrimaryKey(autoGenerate = true) val idEjercicio: Long = 0,
     val nombre: String,
-    val categoria: String?,
-    val descripcion: String?
+    val categoria: String? = null,
+    val descripcion: String? = null,
+    val gifUrl: String? = null
 )

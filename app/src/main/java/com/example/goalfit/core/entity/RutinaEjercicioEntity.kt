@@ -30,5 +30,5 @@ data class RutinaEjercicioEntity(
     val idEjercicio: Int,
     val series: Int,
     val repeticiones: Int,
-    val duracion: Double? // opcional en seg/minutos
+    val duracion: Double?
 )

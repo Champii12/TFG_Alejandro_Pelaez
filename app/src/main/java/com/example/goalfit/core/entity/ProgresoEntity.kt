@@ -3,7 +3,6 @@ package com.example.goalfit.core.entity
 import androidx.room.*
 import java.util.Date
 
-// Progreso
 @Entity(
     tableName = "progreso",
     foreignKeys = [
@@ -25,9 +24,8 @@ import java.util.Date
 data class ProgresoEntity(
     @PrimaryKey(autoGenerate = true) val idProgreso: Long = 0,
     val usuarioID: String,
-    val idRutina: Long,
+    val idRutina: Int,           // ← ahora Int
     val fecha: Date,
     val duracionTotal: Double,
-    val ejerciciosCompletados: String   // JSON o CSV con IDs/nombres
+    val ejerciciosCompletados: String
 )
-

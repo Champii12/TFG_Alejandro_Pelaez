@@ -13,4 +13,8 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE usuarioID = :id")
     suspend fun getById(id: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE usuarioID = :id")
+    fun getByIdFlow(id: String): kotlinx.coroutines.flow.Flow<UserEntity?>
+
 }
